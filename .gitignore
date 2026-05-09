@@ -1,0 +1,14 @@
+# Apple credentials — NEVER commit these
+fastlane/ios/*.p8
+fastlane/ios/*.json
+fastlane/ios/*.cer
+fastlane/ios/*.mobileprovision
+
+# Generated plist
+ios/ExportOptions.plist
+
+# Run logs
+logs/
+
+# macOS
+.DS_Store
