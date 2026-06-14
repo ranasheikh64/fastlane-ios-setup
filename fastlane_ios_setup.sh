@@ -123,11 +123,14 @@ fi
 # ── Banner ─────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}${CYAN}║   Flutter iOS Provisioning Setup  v${SCRIPT_VERSION}             ║${RESET}"
+echo -e "${BOLD}${CYAN}║         🚀 Jronix iOS TestFlight Publish 🚀          ║${RESET}"
+echo -e "${BOLD}${CYAN}║          Automated Provisioning & Deployment         ║${RESET}"
+echo -e "${BOLD}${CYAN}║                        v${SCRIPT_VERSION}                          ║${RESET}"
 if $DRY_RUN; then
 echo -e "${BOLD}${YELLOW}║              ⚠️  DRY-RUN MODE — no changes             ║${RESET}"
 fi
 echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════════╝${RESET}"
+echo -e "${BOLD}${YELLOW}       Powered by Jronix Development Team ⚡️             ${RESET}"
 echo ""
 
 # =============================================================================
@@ -672,5 +675,10 @@ if ! $DRY_RUN; then
   fi
 
   echo ""
-  echo -e "${BOLD}${GREEN}🎉 ALL SETUP AND DEPLOYMENT FINISHED! Happy Coding!${RESET}"
+  echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════╗${RESET}"
+  echo -e "${BOLD}${GREEN}║ 🎉 TESTFLIGHT DEPLOYMENT PIPELINE COMPLETE!          ║${RESET}"
+  echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════════╝${RESET}"
+  echo -e "${BOLD}${CYAN}     Thank you for using Jronix Automation Tools!       ${RESET}"
+  echo -e "${BOLD}${YELLOW}       Built with ❤️  by Jronix Development Team        ${RESET}"
+  echo ""
 fi
