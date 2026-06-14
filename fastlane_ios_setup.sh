@@ -620,16 +620,16 @@ if ! $DRY_RUN; then
     
     # Execute the fastlane gym command
     fastlane gym \
-      --workspace './ios/Runner.xcworkspace' \
-      --scheme 'Runner' \
-      --configuration 'Release' \
+      --workspace "${PROJECT_ROOT}/ios/Runner.xcworkspace" \
+      --scheme "Runner" \
+      --configuration "Release" \
       --clean \
-      --export_method 'app-store' \
-      --export_options './ios/ExportOptions.plist' \
-      --output_directory './ios/build/ipa'
+      --export_method "app-store" \
+      --export_options "${PROJECT_ROOT}/ios/ExportOptions.plist" \
+      --output_directory "${PROJECT_ROOT}/ios/build/ipa"
       
     if [ $? -eq 0 ]; then
-      log_success "IPA built successfully! Saved in: ./ios/build/ipa"
+      log_success "IPA built successfully! Saved in: ${PROJECT_ROOT}/ios/build/ipa"
     else
       log_error "IPA build failed. Check the errors above."
       exit 1
@@ -656,8 +656,8 @@ if ! $DRY_RUN; then
     
     # Execute the fastlane pilot upload command
     fastlane pilot upload \
-      --ipa './ios/build/ipa/Runner.ipa' \
-      --api_key_path "${JSON_REL}" \
+      --ipa "${PROJECT_ROOT}/ios/build/ipa/Runner.ipa" \
+      --api_key_path "${PROJECT_ROOT}/fastlane/ios/AuthKey_${AUTHKEY}.json" \
       --skip_waiting_for_build_processing
       
     if [ $? -eq 0 ]; then
