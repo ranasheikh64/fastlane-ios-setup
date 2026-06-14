@@ -18,11 +18,11 @@
 #  GitHub: https://github.com/ranasheikh64/fastlane-ios-setup
 # =============================================================================
 
-set -euo pipefail   # exit on error, unset var, pipe failure
+set -eo pipefail    # exit on error, pipe failure
 
 # ── Script version ─────────────────────────────────────────────────────────────
-SCRIPT_VERSION="1.0.0"
-TOTAL_STEPS=8
+SCRIPT_VERSION="1.0.1"
+TOTAL_STEPS=7
 
 # ── Flags ──────────────────────────────────────────────────────────────────────
 DRY_RUN=false
@@ -423,6 +423,8 @@ show_progress 3 $TOTAL_STEPS "Certificate obtained: $CERTNAME"
 log_step "STEP 4/${TOTAL_STEPS}: Downloading provisioning profiles (fastlane sigh)"
 
 FAILED_PACKAGES=()
+MATCHED_KEYS=()
+MATCHED_VALUES=()
 
 for PKG in "${PACKAGE_NAMES[@]}"; do
   echo ""
@@ -451,6 +453,22 @@ for PKG in "${PACKAGE_NAMES[@]}"; do
   else
     ROLLBACK_FILES+=("$(pwd)/$PROVISION_FILE")
     log_success "Profile downloaded for $PKG → $(basename "$PROVISION_FILE")"
+    
+    if ! $DRY_RUN; then
+      PROFILE_NAME=$(security cms -D -i "$PROVISION_FILE" 2>/dev/null \
+        | grep -A1 "<key>Name</key>" | grep "<string>" \
+        | sed 's/.*<string>\(.*\)<\/string>.*/\1/' | xargs)
+        
+      if [ -n "$PROFILE_NAME" ]; then
+        MATCHED_KEYS+=("$PKG")
+        MATCHED_VALUES+=("$PROFILE_NAME")
+      else
+        log_warn "Could not extract Name from downloaded profile."
+      fi
+    else
+      MATCHED_KEYS+=("$PKG")
+      MATCHED_VALUES+=("DRY_RUN_PROFILE_${PKG}")
+    fi
   fi
 done
 
@@ -496,65 +514,9 @@ log_success "Now in: $(pwd)"
 show_progress 6 $TOTAL_STEPS "Navigated to ios/"
 
 # =============================================================================
-# STEP 7 — Match provisioning profile names from Xcode
+# STEP 7 — Create ExportOptions.plist
 # =============================================================================
-log_step "STEP 7/${TOTAL_STEPS}: Reading installed profiles from Xcode"
-
-MATCHED_KEYS=()
-MATCHED_VALUES=()
-
-if $DRY_RUN; then
-  for PKG in "${PACKAGE_NAMES[@]}"; do
-    log_dry "Would search Xcode profiles for: $PKG"
-    MATCHED_KEYS+=("$PKG")
-    MATCHED_VALUES+=("DRY_RUN_PROFILE_${PKG}")
-  done
-else
-  PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
-  [ ! -d "$PROFILES_DIR" ] && log_fatal "Xcode provisioning profiles directory not found.\nOpen Xcode → Settings → Accounts → Download Manual Profiles first."
-
-  ALL_NAMES=()
-  while IFS= read -r -d '' f; do
-    NAME=$(security cms -D -i "$f" 2>/dev/null \
-      | grep -A1 "<key>Name</key>" | grep "<string>" \
-      | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-    [ -n "$NAME" ] && ALL_NAMES+=("$NAME")
-  done < <(find "$PROFILES_DIR" -name "*.mobileprovision" -print0)
-
-  [ ${#ALL_NAMES[@]} -eq 0 ] && log_fatal "No profiles found in Xcode.\nGo to Xcode → Settings → Accounts → Download Manual Profiles."
-
-  UNMATCHED=()
-  for PKG in "${PACKAGE_NAMES[@]}"; do
-    MATCHED=""
-    for pname in "${ALL_NAMES[@]}"; do
-      if echo "$pname" | grep -q "$PKG"; then
-        echo "$pname" | grep -qi "AppStore" && MATCHED="$pname" && break
-        MATCHED="$pname"
-      fi
-    done
-    if [ -z "$MATCHED" ]; then
-      UNMATCHED+=("$PKG")
-      log_warn "No installed profile matching: $PKG"
-    else
-      MATCHED_KEYS+=("$PKG")
-      MATCHED_VALUES+=("$MATCHED")
-      log_success "Matched [$PKG] → $MATCHED"
-    fi
-  done
-
-  if [ ${#UNMATCHED[@]} -ne 0 ]; then
-    log_error "No profile found for:"
-    for u in "${UNMATCHED[@]}"; do echo -e "   ${RED}• $u${RESET}"; done
-    log_fatal "Open Xcode → Settings → Accounts → Download Manual Profiles and retry."
-  fi
-fi
-
-show_progress 7 $TOTAL_STEPS "Provisioning profiles matched"
-
-# =============================================================================
-# STEP 8 — Create ExportOptions.plist
-# =============================================================================
-log_step "STEP 8/${TOTAL_STEPS}: Creating ExportOptions.plist"
+log_step "STEP 7/${TOTAL_STEPS}: Creating ExportOptions.plist"
 
 PLIST_FILE="ExportOptions.plist"
 
@@ -606,7 +568,7 @@ EOF
   ROLLBACK_FILES+=("$(pwd)/$PLIST_FILE")
 fi
 
-show_progress 8 $TOTAL_STEPS "ExportOptions.plist created ✓"
+show_progress 7 $TOTAL_STEPS "ExportOptions.plist created ✓"
 
 # Remove trap — all steps passed, rollback no longer needed
 trap - ERR
@@ -641,7 +603,7 @@ if ! $DRY_RUN; then
   echo ""
   
   # =============================================================================
-  # STEP 9 — Build IPA
+  # STEP 8 — Build IPA
   # =============================================================================
   echo -e "${CYAN}▶ NEXT STEP: Build the iOS App (.ipa)${RESET}"
   echo -e "This step will compile your Flutter app and sign it for the App Store using the profiles we just downloaded."
@@ -676,7 +638,7 @@ if ! $DRY_RUN; then
   echo ""
   
   # =============================================================================
-  # STEP 10 — Upload to TestFlight
+  # STEP 9 — Upload to TestFlight
   # =============================================================================
   echo -e "${CYAN}▶ NEXT STEP: Upload to TestFlight${RESET}"
   echo -e "This step will upload your generated .ipa file to App Store Connect using your API Key."
