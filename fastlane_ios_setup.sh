@@ -595,6 +595,9 @@ echo -e "  ${CYAN}Log:${RESET}      $LOG_FILE"
 echo ""
 
 if ! $DRY_RUN; then
+  # Navigate back to the project root before executing build commands
+  cd "$PROJECT_ROOT" || log_fatal "Failed to return to project root."
+
   JSON_REL="./fastlane/ios/AuthKey_${AUTHKEY}.json"
   
   echo -e "${BOLD}═══════════════════════════════════════════════════════${RESET}"
