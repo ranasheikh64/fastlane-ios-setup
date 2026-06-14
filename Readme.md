@@ -55,24 +55,24 @@ mv ~/Downloads/AuthKey_XXXXXX.p8 fastlane/ios/
 
 **Option A — Run directly from your Flutter project root:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/fastlane-ios-setup/main/ios_provision_setup.sh | bash
+bash <(curl -s https://raw.githubusercontent.com/ranasheikh64/fastlane-ios-setup/main/fastlane_ios_setup.sh)
 ```
 
 **Option B — Clone and run:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/fastlane-ios-setup.git
+git clone https://github.com/ranasheikh64/fastlane-ios-setup.git
 cd your-flutter-project
-bash ../fastlane-ios-setup/ios_provision_setup.sh
+bash ../fastlane-ios-setup/fastlane_ios_setup.sh
 ```
 
 **Option C — Download once, use for multiple projects:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/fastlane-ios-setup/main/ios_provision_setup.sh \
-  -o ~/bin/ios_provision_setup.sh
-chmod +x ~/bin/ios_provision_setup.sh
+curl -fsSL https://raw.githubusercontent.com/ranasheikh64/fastlane-ios-setup/main/fastlane_ios_setup.sh \
+  -o ~/bin/fastlane_ios_setup.sh
+chmod +x ~/bin/fastlane_ios_setup.sh
 
 # then from any Flutter project:
-ios_provision_setup.sh
+fastlane_ios_setup.sh
 ```
 
 ---
@@ -82,7 +82,7 @@ ios_provision_setup.sh
 Validates everything **without making any real changes** — no files created, no keychain touched:
 
 ```bash
-./ios_provision_setup.sh --dry-run
+./fastlane_ios_setup.sh --dry-run
 ```
 
 Use this to verify your inputs and environment before the real run.
@@ -177,7 +177,7 @@ fastlane pilot upload \
 
 ```
 fastlane-ios-setup/
-├── ios_provision_setup.sh   ← main script
+├── fastlane_ios_setup.sh   ← main script
 └── README.md
 ```
 

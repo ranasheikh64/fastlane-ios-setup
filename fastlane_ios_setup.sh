@@ -15,7 +15,7 @@
 #    Place your .p8 key file inside  fastlane/ios/  relative to your
 #    Flutter project root  (e.g.  fastlane/ios/AuthKey_XXXXXX.p8)
 #
-#  GitHub: https://github.com/YOUR_USERNAME/fastlane-ios-setup
+#  GitHub: https://github.com/ranasheikh64/fastlane-ios-setup
 # =============================================================================
 
 set -euo pipefail   # exit on error, unset var, pipe failure
@@ -510,7 +510,7 @@ if $DRY_RUN; then
     MATCHED_VALUES+=("DRY_RUN_PROFILE_${PKG}")
   done
 else
-  PROFILES_DIR=~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
+  PROFILES_DIR=~/Library/MobileDevice/Provisioning\ Profiles
   [ ! -d "$PROFILES_DIR" ] && log_fatal "Xcode provisioning profiles directory not found.\nOpen Xcode → Settings → Accounts → Download Manual Profiles first."
 
   ALL_NAMES=()
@@ -634,22 +634,78 @@ echo ""
 
 if ! $DRY_RUN; then
   JSON_REL="./fastlane/ios/AuthKey_${AUTHKEY}.json"
-  echo -e "${BOLD}Next steps:${RESET}"
+  
+  echo -e "${BOLD}═══════════════════════════════════════════════════════${RESET}"
+  echo -e "${BOLD}                   BUILD & UPLOAD                      ${RESET}"
+  echo -e "${BOLD}═══════════════════════════════════════════════════════${RESET}"
   echo ""
-  echo -e "${CYAN}# 1. Build & sign IPA${RESET}"
-  echo -e "fastlane gym \\"
-  echo -e "  --workspace './ios/Runner.xcworkspace' \\"
-  echo -e "  --scheme 'Runner' \\"
-  echo -e "  --configuration 'Release' \\"
-  echo -e "  --clean \\"
-  echo -e "  --export_method 'app-store' \\"
-  echo -e "  --export_options './ios/ExportOptions.plist' \\"
-  echo -e "  --output_directory './ios/build/ipa'"
+  
+  # =============================================================================
+  # STEP 9 — Build IPA
+  # =============================================================================
+  echo -e "${CYAN}▶ NEXT STEP: Build the iOS App (.ipa)${RESET}"
+  echo -e "This step will compile your Flutter app and sign it for the App Store using the profiles we just downloaded."
   echo ""
-  echo -e "${CYAN}# 2. Upload to TestFlight${RESET}"
-  echo -e "fastlane pilot upload \\"
-  echo -e "  --ipa './ios/build/ipa/Runner.ipa' \\"
-  echo -e "  --api_key_path '${JSON_REL}' \\"
-  echo -e "  --skip_waiting_for_build_processing"
+  
+  # Prompt the user for permission to execute
+  read -rp "$(echo -e "${BOLD}Do you want to build the IPA now? (y/n): ${RESET}")" RUN_BUILD
+  
+  if [[ "$RUN_BUILD" == "y" || "$RUN_BUILD" == "Y" ]]; then
+    log_info "Starting IPA build... This may take a few minutes."
+    
+    # Execute the fastlane gym command
+    fastlane gym \
+      --workspace './ios/Runner.xcworkspace' \
+      --scheme 'Runner' \
+      --configuration 'Release' \
+      --clean \
+      --export_method 'app-store' \
+      --export_options './ios/ExportOptions.plist' \
+      --output_directory './ios/build/ipa'
+      
+    if [ $? -eq 0 ]; then
+      log_success "IPA built successfully! Saved in: ./ios/build/ipa"
+    else
+      log_error "IPA build failed. Check the errors above."
+      exit 1
+    fi
+  else
+    echo -e "${YELLOW}Skipped IPA build.${RESET}"
+  fi
+  
   echo ""
+  
+  # =============================================================================
+  # STEP 10 — Upload to TestFlight
+  # =============================================================================
+  echo -e "${CYAN}▶ NEXT STEP: Upload to TestFlight${RESET}"
+  echo -e "This step will upload your generated .ipa file to App Store Connect using your API Key."
+  echo ""
+  
+  # Prompt the user for permission to upload
+  read -rp "$(echo -e "${BOLD}Do you want to upload to TestFlight now? (y/n): ${RESET}")" RUN_UPLOAD
+  
+  if [[ "$RUN_UPLOAD" == "y" || "$RUN_UPLOAD" == "Y" ]]; then
+    log_info "Starting TestFlight upload... Please wait."
+    echo -e "${YELLOW}Note: You will see the upload progress and percentage logs below from Apple's Transporter.${RESET}"
+    
+    # Execute the fastlane pilot upload command
+    fastlane pilot upload \
+      --ipa './ios/build/ipa/Runner.ipa' \
+      --api_key_path "${JSON_REL}" \
+      --skip_waiting_for_build_processing
+      
+    if [ $? -eq 0 ]; then
+      log_success "Upload complete! Your app is now processing on TestFlight."
+      echo -e "${CYAN}You will receive an email from Apple when it is ready to test.${RESET}"
+    else
+      log_error "Upload failed. Check the errors above."
+      exit 1
+    fi
+  else
+    echo -e "${YELLOW}Skipped TestFlight upload.${RESET}"
+  fi
+
+  echo ""
+  echo -e "${BOLD}${GREEN}🎉 ALL SETUP AND DEPLOYMENT FINISHED! Happy Coding!${RESET}"
 fi
