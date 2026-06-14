@@ -1,188 +1,101 @@
-# 🍎 Flutter iOS Provisioning Setup
+# 🚀 Jronix iOS TestFlight Publish
 
-Automates **App Store certificate + provisioning profile** setup for Flutter iOS apps using Fastlane — so any developer can build and upload to TestFlight using a client's Apple Developer account **without needing their Apple ID or password**.
+A fully automated, zero-headache Bash script for Flutter developers to handle iOS Provisioning, Code Signing, and TestFlight Deployment using Fastlane.
 
----
+Powered by **Jronix Development Team** ⚡️.
 
-## ✅ What This Script Does
-
-| Step | Action |
-|------|--------|
-| 0 | Auto-detects Flutter project root (or asks you) |
-| 1–2 | Creates `AuthKey_XXXX.json` from your `.p8` key |
-| 3 | Downloads Distribution Certificate via `fastlane cert` |
-| 3b | Imports certificate into your macOS Keychain |
-| 4 | Downloads Provisioning Profiles via `fastlane sigh` |
-| 5 | Extracts Team ID from the certificate |
-| 6–7 | Matches profiles installed in Xcode |
-| 8 | Generates `ios/ExportOptions.plist` |
-
-After the script completes, you get **two ready-to-run commands** to build your IPA and upload to TestFlight.
+## ✨ Features
+- **Auto Project Detection**: Automatically finds your Flutter project root.
+- **One-Command Setup**: Downloads distribution certificates and provisioning profiles automatically.
+- **Auto Fastlane Integration**: Generates the required API key JSON and `ExportOptions.plist`.
+- **One-Click Build & Upload**: Interactively builds the `.ipa` and uploads it to TestFlight without leaving the terminal.
+- **Safe Rollback**: Automatically cleans up generated keys and certificates if any step fails.
 
 ---
 
-## 📋 Prerequisites
+## 🛠 Prerequisites
 
-### macOS only
-```bash
-brew install fastlane openssl
-```
-
-### From your client's Apple Developer account
-1. Go to [App Store Connect → Users → Keys](https://appstoreconnect.apple.com/access/integrations/api)
-2. Create or download an **API Key** (role: App Manager or higher)
-3. Note the **Key ID** (e.g. `LTG6TML48B`) and **Issuer ID**
-4. Download the `.p8` file (you can only download it once)
+Before running the script, make sure you have the following installed on your Mac:
+- **macOS** (Required for iOS builds)
+- **Xcode** (Installed from Mac App Store)
+- **Fastlane** (`brew install fastlane`)
+- **CocoaPods** (`brew upgrade cocoapods`)
 
 ---
 
-## 🚀 Quick Start
+## 🔑 Getting the Client's API Key & Permissions
 
-### Step 1 — Place your `.p8` file
+To publish an app on behalf of a client, you need an **App Store Connect API Key (`.p8` file)** from their Apple Developer Account. 
+
+### What permission do you need?
+Tell your client to generate an API Key with **Admin** or **App Manager** access in their App Store Connect account.
+
+### How to generate the `.p8` file (Share these steps with your client):
+1. Log in to [App Store Connect](https://appstoreconnect.apple.com/).
+2. Go to **Users and Access** > **Keys** (tab).
+3. Click the **+** button to add a new key.
+4. **Name**: Enter any name (e.g., "Jronix Fastlane Key").
+5. **Access**: Select **Admin** or **App Manager**.
+6. Click **Generate**.
+7. Click **Download API Key** to get the `.p8` file (e.g., `AuthKey_XXXXXXXXXX.p8`). 
+   *(⚠️ Note: Apple only allows downloading this file ONCE. Keep it safe.)*
+8. Note down the **Issuer ID** and **Key ID** shown on that page (you will need to provide these to the script).
+
+---
+
+## 🚀 How to Use
+
+### Step 1: Place your Key File
+In your Flutter project, create a folder named `fastlane/ios/` and drop your `.p8` file inside:
+```text
+your_flutter_project/
+├── lib/
+├── ios/
+├── fastlane/
+│   └── ios/
+│       └── AuthKey_XXXXXXXXXX.p8   <-- Place it here
+└── pubspec.yaml
 ```
-your-flutter-project/
-└── fastlane/
-    └── ios/
-        └── AuthKey_XXXXXX.p8   ← put it here
-```
 
-```bash
-mkdir -p fastlane/ios
-mv ~/Downloads/AuthKey_XXXXXX.p8 fastlane/ios/
-```
+*(Note: Don't forget to add `fastlane/ios/AuthKey_*.json` and `*.p8` to your `.gitignore` to keep them secure!)*
 
-### Step 2 — Download & run the script
+### Step 2: Run the Automation Script
+Open your terminal, go to your Flutter project folder, and run this single command:
 
-**Option A — Run directly from your Flutter project root:**
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/ranasheikh64/fastlane-ios-setup/main/fastlane_ios_setup.sh)
 ```
 
-**Option B — Clone and run:**
+### Step 3: Follow the Prompts
+The script will ask you for a few details:
+1. **Key ID**: (The 10-character ID of your `.p8` file, e.g., CHTVK57497)
+2. **Issuer ID**: (The long UUID from App Store Connect)
+3. **Bundle ID**: (Your app's bundle ID, e.g., `com.jronix.myapp`)
+
+After entering these, the script will automatically:
+✅ Create the necessary AuthKey JSON.
+✅ Download the Apple Distribution Certificate.
+✅ Download the App Store Provisioning Profiles.
+✅ Build the `.ipa` file using `fastlane gym`.
+✅ Upload it directly to TestFlight using `fastlane pilot`.
+
+---
+
+## ⚠️ Troubleshooting (CocoaPods)
+
+If your app fails to build (`ARCHIVE FAILED`) and you see errors regarding `PrivacyInfo.xcprivacy`, it means your project has old, cached CocoaPods files. 
+
+Run this to fix it before running the script again:
 ```bash
-git clone https://github.com/ranasheikh64/fastlane-ios-setup.git
-cd your-flutter-project
-bash ../fastlane-ios-setup/fastlane_ios_setup.sh
-```
-
-**Option C — Download once, use for multiple projects:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/ranasheikh64/fastlane-ios-setup/main/fastlane_ios_setup.sh \
-  -o ~/bin/fastlane_ios_setup.sh
-chmod +x ~/bin/fastlane_ios_setup.sh
-
-# then from any Flutter project:
-fastlane_ios_setup.sh
+flutter clean
+flutter pub get
+cd ios
+rm -rf Pods Podfile.lock
+pod install --repo-update
+cd ..
 ```
 
 ---
 
-## 🧪 Dry-Run Mode
-
-Validates everything **without making any real changes** — no files created, no keychain touched:
-
-```bash
-./fastlane_ios_setup.sh --dry-run
-```
-
-Use this to verify your inputs and environment before the real run.
-
----
-
-## 🔄 Rollback
-
-If any step fails, the script **automatically rolls back**:
-- Deletes the `AuthKey_XXXX.json` file
-- Deletes downloaded `.cer` and `.mobileprovision` files
-- Removes the imported certificate from your macOS Keychain
-- Deletes `ExportOptions.plist`
-
-You can safely re-run the script after fixing the issue.
-
----
-
-## 📁 Files Created
-
-```
-your-flutter-project/
-├── fastlane/
-│   └── ios/
-│       ├── AuthKey_XXXXXX.p8         (your input)
-│       ├── AuthKey_XXXXXX.json       ← created by script
-│       ├── XXXXXXXXXX.cer            ← distribution certificate
-│       └── *.mobileprovision         ← provisioning profiles
-├── ios/
-│   └── ExportOptions.plist           ← created by script
-└── logs/
-    └── ios_setup_20240101_120000.log ← run log
-```
-
----
-
-## 🏗️ After Running — Build & Upload
-
-The script prints these commands at the end:
-
-**Build IPA:**
-```bash
-fastlane gym \
-  --workspace './ios/Runner.xcworkspace' \
-  --scheme 'Runner' \
-  --configuration 'Release' \
-  --clean \
-  --export_method 'app-store' \
-  --export_options './ios/ExportOptions.plist' \
-  --output_directory './ios/build/ipa'
-```
-
-**Upload to TestFlight:**
-```bash
-fastlane pilot upload \
-  --ipa './ios/build/ipa/Runner.ipa' \
-  --api_key_path './fastlane/ios/AuthKey_XXXXXX.json' \
-  --skip_waiting_for_build_processing
-```
-
----
-
-## 🔐 Security Notes
-
-- The `.p8` file and generated `AuthKey_*.json` contain **private key material**
-- Add both to `.gitignore`:
-  ```gitignore
-  fastlane/ios/*.p8
-  fastlane/ios/*.json
-  fastlane/ios/*.cer
-  fastlane/ios/*.mobileprovision
-  ios/ExportOptions.plist
-  logs/
-  ```
-- Never commit these files to version control
-
----
-
-## ❓ Troubleshooting
-
-| Error | Fix |
-|-------|-----|
-| `fastlane cert` fails | Check Key ID, Issuer ID, and `.p8` file are correct |
-| `No .mobileprovision file` | Verify bundle ID exists in App Store Connect |
-| `No profiles in Xcode` | Xcode → Settings → Accounts → Download Manual Profiles |
-| `Team ID not found` | Certificate may be corrupted — delete and re-run |
-| `plutil: invalid plist` | Check for special characters in profile name |
-
----
-
-## 🗂️ Project Structure
-
-```
-fastlane-ios-setup/
-├── fastlane_ios_setup.sh   ← main script
-└── README.md
-```
-
----
-
-## 📄 License
-
-MIT — free to use, modify, and distribute.# fastlane-ios-setup
+*Thank you for using Jronix Automation Tools!*  
+*Built with ❤️ by Jronix Development Team.*
