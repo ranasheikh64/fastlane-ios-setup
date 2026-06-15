@@ -379,7 +379,7 @@ if $DRY_RUN; then
   log_dry "Would run: fastlane cert --api_key_path $JSON_FILE"
   CERTNAME="DRY_RUN_CERT"
 else
-  CERT_OUTPUT=$(fastlane cert --api_key_path "$JSON_FILE" 2>&1)
+  CERT_OUTPUT=$(fastlane cert --api_key_path "$JSON_FILE" 2>&1) || true
   echo "$CERT_OUTPUT"
 
   NEW_CER_FILE=$(find . -maxdepth 1 -name "*.cer" -newer "$JSON_FILE" | head -n 1)
@@ -439,7 +439,7 @@ for PKG in "${PACKAGE_NAMES[@]}"; do
   fi
 
   TMP_MARKER=$(mktemp)
-  SIGH_OUTPUT=$(fastlane sigh --api_key_path "$JSON_FILE" -a "$PKG" 2>&1)
+  SIGH_OUTPUT=$(fastlane sigh --api_key_path "$JSON_FILE" -a "$PKG" 2>&1) || true
   echo "$SIGH_OUTPUT"
 
   PROVISION_FILE=$(find . -maxdepth 1 -name "*${PKG}*.mobileprovision" | head -n 1)
@@ -495,7 +495,7 @@ if $DRY_RUN; then
   log_dry "Would extract Team ID (OU) from $CERTNAME.cer via openssl."
   TEAMID="DRYRUN_TEAM"
 else
-  OPENSSL_OUT=$(openssl x509 -in "${CERTNAME}.cer" -inform DER -text -noout 2>&1)
+  OPENSSL_OUT=$(openssl x509 -in "${CERTNAME}.cer" -inform DER -text -noout 2>&1) || true
   [ $? -ne 0 ] && { log_error "openssl failed:"; echo "$OPENSSL_OUT"; log_fatal "Step 5 failed."; }
   TEAMID=$(echo "$OPENSSL_OUT" | grep "Subject:" | grep -oE 'OU=[A-Z0-9]+' | head -n 1 | cut -d= -f2)
   [ -z "$TEAMID" ] && log_fatal "Could not extract Team ID (OU) from certificate."
