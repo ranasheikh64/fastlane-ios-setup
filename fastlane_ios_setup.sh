@@ -300,24 +300,42 @@ fi
 
 # ── Input 4: Bundle IDs ────────────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}[4] Enter Bundle ID(s) one by one.${RESET}"
-echo -e "${YELLOW}    Press ENTER with empty input when done.${RESET}"
-echo -e "${YELLOW}    Example: com.company.myapp${RESET}"
+echo -e "${BOLD}[4] Fetching Bundle ID...${RESET}"
 PACKAGE_NAMES=()
-while true; do
-  IDX=$((${#PACKAGE_NAMES[@]} + 1))
-  read -rp "  Bundle ID #${IDX} (empty = done): " PKG
-  PKG=$(echo "$PKG" | xargs)
-  [ -z "$PKG" ] && [ ${#PACKAGE_NAMES[@]} -gt 0 ] && break
-  [ -z "$PKG" ] && log_warn "Enter at least one bundle ID." && continue
-  # basic format check
-  if ! echo "$PKG" | grep -qE '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*){1,}$'; then
-    log_warn "That doesn't look like a valid bundle ID (e.g. com.company.app). Try again."
-    continue
+
+# Try to fetch from project.pbxproj
+PBX_PATH="${PROJECT_ROOT}/ios/Runner.xcodeproj/project.pbxproj"
+if [ -f "$PBX_PATH" ]; then
+  AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = "[^"]+"' "$PBX_PATH" | head -n 1 | cut -d'"' -f2)
+  if [ -z "$AUTO_BUNDLE" ]; then
+    AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = [^;]+' "$PBX_PATH" | head -n 1 | awk '{print $3}')
   fi
-  PACKAGE_NAMES+=("$PKG")
-  log_success "Added: $PKG"
-done
+  
+  if [ -n "$AUTO_BUNDLE" ]; then
+    log_success "Auto-detected Bundle ID: $AUTO_BUNDLE"
+    PACKAGE_NAMES+=("$AUTO_BUNDLE")
+  fi
+fi
+
+if [ ${#PACKAGE_NAMES[@]} -eq 0 ]; then
+  echo -e "${BOLD}Enter Bundle ID(s) one by one.${RESET}"
+  echo -e "${YELLOW}    Press ENTER with empty input when done.${RESET}"
+  echo -e "${YELLOW}    Example: com.company.myapp${RESET}"
+  while true; do
+    IDX=$((${#PACKAGE_NAMES[@]} + 1))
+    read -rp "  Bundle ID #${IDX} (empty = done): " PKG
+    PKG=$(echo "$PKG" | xargs)
+    [ -z "$PKG" ] && [ ${#PACKAGE_NAMES[@]} -gt 0 ] && break
+    [ -z "$PKG" ] && log_warn "Enter at least one bundle ID." && continue
+    # basic format check
+    if ! echo "$PKG" | grep -qE '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*){1,}$'; then
+      log_warn "That doesn't look like a valid bundle ID (e.g. com.company.app). Try again."
+      continue
+    fi
+    PACKAGE_NAMES+=("$PKG")
+    log_success "Added: $PKG"
+  done
+fi
 
 # ── Summary + confirm ──────────────────────────────────────────────────────────
 echo ""
