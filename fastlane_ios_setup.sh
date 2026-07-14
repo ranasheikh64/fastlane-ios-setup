@@ -621,7 +621,9 @@ if ! $DRY_RUN; then
   if [[ "$RUN_BUILD" == "y" || "$RUN_BUILD" == "Y" ]]; then
     log_info "Starting IPA build... This may take a few minutes."
     
-    # Execute the fastlane gym command
+    # We need to tell xcodebuild to use manual signing during the archive phase
+    PRIMARY_PROFILE="${MATCHED_VALUES[0]}"
+    
     fastlane gym \
       --workspace "${PROJECT_ROOT}/ios/Runner.xcworkspace" \
       --scheme "Runner" \
@@ -629,7 +631,8 @@ if ! $DRY_RUN; then
       --clean \
       --export_method "app-store" \
       --export_options "${PROJECT_ROOT}/ios/ExportOptions.plist" \
-      --output_directory "${PROJECT_ROOT}/ios/build/ipa"
+      --output_directory "${PROJECT_ROOT}/ios/build/ipa" \
+      --xcargs "CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='${PRIMARY_PROFILE}' CODE_SIGN_IDENTITY='Apple Distribution'"
       
     if [ $? -eq 0 ]; then
       log_success "IPA built successfully! Saved in: ${PROJECT_ROOT}/ios/build/ipa"
