@@ -265,6 +265,10 @@ while true; do
     [ -n "$EG_AUTH_KEY" ] && AUTHKEY="$EG_AUTH_KEY" && log_success "Using key ID from filename: $AUTHKEY" && break
     log_warn "Key ID cannot be empty."
   else
+    if [[ "$AUTHKEY" =~ ^[0-9a-fA-F]{8}- ]]; then
+      log_warn "That looks like an Issuer ID (UUID), not a Key ID! Key IDs are usually 10 characters (e.g. 6SS65Y9WQ3)."
+      continue
+    fi
     log_success "Key ID: $AUTHKEY"; break
   fi
 done
