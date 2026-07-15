@@ -461,7 +461,7 @@ for PKG in "${PACKAGE_NAMES[@]}"; do
   fi
 
   TMP_MARKER=$(mktemp)
-  SIGH_OUTPUT=$(fastlane sigh --api_key_path "$JSON_FILE" -a "$PKG" --force 2>&1) || true
+  SIGH_OUTPUT=$(fastlane sigh --api_key_path "$JSON_FILE" -a "$PKG" --force --include_all_certificates 2>&1) || true
   echo "$SIGH_OUTPUT"
 
   PROVISION_FILE=$(find . -maxdepth 1 -name "*${PKG}*.mobileprovision" | head -n 1)
