@@ -306,9 +306,9 @@ PACKAGE_NAMES=()
 # Try to fetch from project.pbxproj
 PBX_PATH="${PROJECT_ROOT}/ios/Runner.xcodeproj/project.pbxproj"
 if [ -f "$PBX_PATH" ]; then
-  AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = "[^"]+"' "$PBX_PATH" | head -n 1 | cut -d'"' -f2)
+  AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = "[^"]+"' "$PBX_PATH" | head -n 1 | cut -d'"' -f2 || true)
   if [ -z "$AUTO_BUNDLE" ]; then
-    AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = [^;]+' "$PBX_PATH" | head -n 1 | awk '{print $3}')
+    AUTO_BUNDLE=$(grep -Eo 'PRODUCT_BUNDLE_IDENTIFIER = [^;]+' "$PBX_PATH" | head -n 1 | awk '{print $3}' || true)
   fi
   
   if [ -n "$AUTO_BUNDLE" ]; then
